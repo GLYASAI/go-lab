@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path"
@@ -15,6 +14,14 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		if _, err := os.Create(output); err != nil {
+			panic(err)
+		}
+	}
+	f, err := os.OpenFile(output, os.O_WRONLY|os.O_APPEND, 0666)
+	defer f.Close()
+	if err != nil {
+		panic(fmt.Sprintf("error opening file: %s: %v", output, err))
 	}
 	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("0.0.0.0"), Port: 38080})
 	if err != nil {
@@ -29,7 +36,7 @@ func main() {
 			fmt.Printf("error during read: %s", err)
 		}
 		fmt.Printf("<%s> %s\n", remoteAddr, data[:n])
-		err = ioutil.WriteFile(output, data[:n], 0644)
+		_, err = f.Write(data[:n])
 		if err != nil {
 			panic(err)
 		}
